@@ -1,58 +1,32 @@
-const { Model, DataTypes } = require('sequelize');
-const bcrypt = require('bcrypt');
-const sequelize = require('../config/connection');
+const { Schema } = require('mongoose');
 
-class User extends Model {
-  checkPassword(loginPw) {
-    return bcrypt.compareSync(loginPw, this.password);
-  }
-}
+// helper function
+var validateEmail = function(email) {
+    var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    return re.test(email)
+};
 
-User.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-      validate: {
-        isEmail: true,
+// user schema
+const userSchema = new Schema({
+    username: {
+        type: String,
+        required: true,
+        max_length: 25,
       },
+    email: {
+        type: String,
+        required: true,
+        validate: [validateEmail, 'Please enter a valid email'],
     },
     password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        len: [8],
-      },
+        type: String,
+        required: true,
+        max_length: 25,
     },
-  },
-  {
-    hooks: {
-      beforeCreate: async (newUserData) => {
-        newUserData.password = await bcrypt.hash(newUserData.password, 10);
-        return newUserData;
-      },
-      beforeUpdate: async (updatedUserData) => {
-        updatedUserData.password = await bcrypt.hash(updatedUserData.password, 10);
-        return updatedUserData;
-      },
+    createdAt: {
+        type: date,
+        default: Date.now,
     },
-    sequelize,
-    timestamps: false,
-    freezeTableName: true,
-    underscored: true,
-    modelName: 'user',
-  }
-);
+});
 
-module.exports = User;
+module.exports = userSchema;
